@@ -1,0 +1,31 @@
+{
+  "name": "deep-copy-ts",
+  "version": "0.1.0",
+  "description": "A deep-copy utility function for TypeScript",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rimraf .rpt2_cache dist",
+    "start": "tsc -w",
+    "build": "tsc",
+    "dry-run": "npm publish --dry-run",
+    "patch-release": "npm run clean && npm run build && npm version patch --force -m \"Patch release\" && npm publish && git push --follow-tags",
+    "minor-release": "npm run clean && npm run build && npm version minor --force -m \"Minor release\" && npm publish && git push --follow-tags",
+    "major-release": "npm run clean && npm run build && npm version major --force -m \"Major release\" && npm publish && git push --follow-tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erikvullings/deep-copy-ts.git"
+  },
+  "keywords": [],
+  "author": "Erik Vullings <erik.vullings@gmail.com> (http://www.tno.nl)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/erikvullings/deep-copy-ts/issues"
+  },
+  "homepage": "https://github.com/erikvullings/deep-copy-ts#readme",
+  "devDependencies": {
+    "rimraf": "^3.0.0",
+    "typescript": "^3.7.4"
+  }
+}
