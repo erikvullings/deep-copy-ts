@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "clean": "rimraf .rpt2_cache dist",
+    "clean": "rimraf dist",
     "start": "tsc -w",
     "build": "tsc",
     "dry-run": "npm publish --dry-run",
