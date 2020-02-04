@@ -1,6 +1,6 @@
 {
   "name": "deep-copy-ts",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A deep-copy utility function for TypeScript",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
