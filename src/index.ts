@@ -8,19 +8,23 @@
 export function deepCopy<T>(target: T): T {
   if (target === null) {
     return target;
-  } else if (target instanceof Date) {
+  }
+  if (target instanceof Date) {
     return new Date(target.getTime()) as any;
-  } else if (target instanceof ArrayBuffer) {
+  }
+  if (target instanceof ArrayBuffer) {
     const result = new ArrayBuffer(target.byteLength);
     new Uint8Array(result).set(new Uint8Array(target));
     return result as any;
-  } else if (target instanceof Array) {
+  }
+  if (target instanceof Array) {
     const cp = [] as any[];
     (target as any[]).forEach((v) => {
       cp.push(v);
     });
     return cp.map((n: any) => deepCopy<any>(n)) as any;
-  } else if (typeof target === "object" && target !== {}) {
+  }
+  if (typeof target === "object" && target !== {}) {
     const cp = { ...(target as { [key: string]: any }) } as {
       [key: string]: any;
     };
