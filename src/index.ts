@@ -1,8 +1,11 @@
+import { cloneArrayBuffer } from "./cloneArrayBuffer";
+import { cloneDataView } from "./cloneDataView";
+
 /**
  * Deep copy function for TypeScript.
  * @param T Generic type of target/copied value.
  * @param target Target value to be copied.
- * @see Orginal source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
+ * @see Original source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
  * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg
  */
 export function deepCopy<T>(target: T): T {
@@ -13,9 +16,10 @@ export function deepCopy<T>(target: T): T {
     return new Date(target.getTime()) as any;
   }
   if (target instanceof ArrayBuffer) {
-    const result = new ArrayBuffer(target.byteLength);
-    new Uint8Array(result).set(new Uint8Array(target));
-    return result as any;
+    return cloneArrayBuffer(target) as any;
+  }
+  if (target instanceof DataView) {
+    return cloneDataView(target) as any;
   }
   if (target instanceof Array) {
     const cp = [] as any[];
