@@ -13,7 +13,6 @@ describe("deepCopy", () => {
       expect(Object.prototype.toString.call(copy.arrayBuffer)).toEqual(
         "[object ArrayBuffer]"
       );
-      expect(copy.arrayBuffer.byteLength).toEqual(16);
     });
   });
 
@@ -34,9 +33,25 @@ describe("deepCopy", () => {
       expect(Object.prototype.toString.call(copy.dataView)).toEqual(
         "[object DataView]"
       );
-      expect(copy.dataView.byteLength).toEqual(16);
-      expect(copy.dataView.byteOffset).toEqual(0);
-      expect(copy.dataView.getInt16(1)).toEqual(42);
+    });
+  });
+
+  describe("when an object has a TypedArray", () => {
+    it("should copy a TypedArray", () => {
+      const buffer = new ArrayBuffer(16);
+      const float32Array = new Float32Array(buffer, 0);
+      float32Array[0] = 42;
+
+      const object = {
+        float32Array,
+      };
+
+      const copy = deepCopy(object);
+
+      expect(copy.float32Array).not.toBe(object.float32Array);
+      expect(Object.prototype.toString.call(copy.float32Array)).toEqual(
+        "[object Float32Array]"
+      );
     });
   });
 });

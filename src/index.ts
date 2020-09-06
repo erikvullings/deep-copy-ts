@@ -1,5 +1,6 @@
 import { cloneArrayBuffer } from "./cloneArrayBuffer";
 import { cloneDataView } from "./cloneDataView";
+import { cloneTypedArray } from "./cloneTypedArray";
 
 /**
  * Deep copy function for TypeScript.
@@ -27,6 +28,21 @@ export function deepCopy<T>(target: T): T {
       cp.push(v);
     });
     return cp.map((n: any) => deepCopy<any>(n)) as any;
+  }
+  if (
+    target instanceof Float32Array ||
+    target instanceof Float64Array ||
+    target instanceof Int8Array ||
+    target instanceof Int16Array ||
+    target instanceof Int32Array ||
+    target instanceof Uint8Array ||
+    target instanceof Uint16Array ||
+    target instanceof Uint32Array ||
+    target instanceof Uint8ClampedArray ||
+    target instanceof BigInt64Array ||
+    target instanceof BigUint64Array
+  ) {
+    return cloneTypedArray(target) as any;
   }
   if (typeof target === "object" && target !== {}) {
     const cp = { ...(target as { [key: string]: any }) } as {
