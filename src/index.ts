@@ -1,6 +1,26 @@
 import { cloneArrayBuffer } from "./cloneArrayBuffer";
 import { cloneDataView } from "./cloneDataView";
+import { cloneDate } from "./cloneDate";
+import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
+
+const TypedArrayMap: Record<string, Function> = {
+  "[object Date]": cloneDate,
+  "[object ArrayBuffer]": cloneArrayBuffer,
+  "[object DataView]": cloneDataView,
+  "[object Float32Array]": cloneTypedArray,
+  "[object Float64Array]": cloneTypedArray,
+  "[object Int8Array]": cloneTypedArray,
+  "[object Int16Array]": cloneTypedArray,
+  "[object Int32Array]": cloneTypedArray,
+  "[object Uint8Array]": cloneTypedArray,
+  "[object Uint8ClampedArray]": cloneTypedArray,
+  "[object Uint16Array]": cloneTypedArray,
+  "[object Uint32Array]": cloneTypedArray,
+  "[object BigInt64Array]": cloneTypedArray,
+  "[object BigUint64Array]": cloneTypedArray,
+  "[object RegExp]": cloneRegExp,
+};
 
 /**
  * Deep copy function for TypeScript.
@@ -10,17 +30,13 @@ import { cloneTypedArray } from "./cloneTypedArray";
  * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg
  */
 export function deepCopy<T>(target: T): T {
+  const tag = Object.prototype.toString.call(target);
+
+  if (TypedArrayMap[tag]) {
+    return TypedArrayMap[tag](target);
+  }
   if (target === null) {
     return target;
-  }
-  if (target instanceof Date) {
-    return new Date(target.getTime()) as any;
-  }
-  if (target instanceof ArrayBuffer) {
-    return cloneArrayBuffer(target) as any;
-  }
-  if (target instanceof DataView) {
-    return cloneDataView(target) as any;
   }
   if (target instanceof Array) {
     const cp = [] as any[];
@@ -28,21 +44,6 @@ export function deepCopy<T>(target: T): T {
       cp.push(v);
     });
     return cp.map((n: any) => deepCopy<any>(n)) as any;
-  }
-  if (
-    target instanceof Float32Array ||
-    target instanceof Float64Array ||
-    target instanceof Int8Array ||
-    target instanceof Int16Array ||
-    target instanceof Int32Array ||
-    target instanceof Uint8Array ||
-    target instanceof Uint16Array ||
-    target instanceof Uint32Array ||
-    target instanceof Uint8ClampedArray ||
-    target instanceof BigInt64Array ||
-    target instanceof BigUint64Array
-  ) {
-    return cloneTypedArray(target) as any;
   }
   if (typeof target === "object" && target !== {}) {
     const cp = { ...(target as { [key: string]: any }) } as {
