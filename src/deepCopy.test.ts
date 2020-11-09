@@ -1,4 +1,4 @@
-import { deepCopy } from "./";
+import { deepCopy } from ".";
 
 describe("deepCopy", () => {
   describe("when an object has an ArrayBuffer", () => {
