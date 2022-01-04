@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "start": "tsc -w",
-    "build": "tsc",
+    "build": "tsc -b",
     "dry-run": "npm publish --dry-run",
     "patch-release": "npm run clean && npm run build && npm version patch --force -m \"Patch release\" && npm publish && git push --follow-tags",
     "minor-release": "npm run clean && npm run build && npm version minor --force -m \"Minor release\" && npm publish && git push --follow-tags",

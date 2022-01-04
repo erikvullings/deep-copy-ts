@@ -1,6 +1,7 @@
 import { cloneArrayBuffer } from "./cloneArrayBuffer";
 import { cloneDataView } from "./cloneDataView";
 import { cloneDate } from "./cloneDate";
+import { cloneMap } from "./cloneMap";
 import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
 
@@ -20,6 +21,7 @@ const TypedArrayMap: Record<string, Function> = {
   "[object BigInt64Array]": cloneTypedArray,
   "[object BigUint64Array]": cloneTypedArray,
   "[object RegExp]": cloneRegExp,
+  "[object Map]": cloneMap,
 };
 
 /**

@@ -1,6 +1,24 @@
 import { deepCopy } from ".";
 
 describe("deepCopy", () => {
+  describe("string copies", () => {
+    it("should copy strings", () => {
+      const original = "Erik";
+      const copy = deepCopy(original);
+
+      expect(copy).toEqual(original);
+    });
+  });
+
+  describe("number copies", () => {
+    it("should copy numbers", () => {
+      const original = 42;
+      const copy = deepCopy(original);
+
+      expect(copy).toEqual(original);
+    });
+  });
+
   describe("when an object has an ArrayBuffer", () => {
     it("should copy an ArrayBuffer", () => {
       const object = {
