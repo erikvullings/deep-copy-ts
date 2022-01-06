@@ -1,3 +1,5 @@
+[![NPM](https://nodei.co/npm/deep-copy-ts.png?mini=true)](https://npmjs.org/package/deep-copy-ts)
+[![Build Status](https://app.travis-ci.com/erikvullings/deep-copy-ts.svg?branch=master)](https://app.travis-ci.com/erikvullings/deep-copy-ts)
 # deep-copy-ts
 
 A deep-copy (a.k.a. clone) utility function for TypeScript, based on [ts-deepcopy](https://github.com/ykdr2017/ts-deepcopy). Explore it in [CodeSandbox](https://codesandbox.io/s/laughing-pare-636xh).
