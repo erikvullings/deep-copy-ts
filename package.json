@@ -1,6 +1,6 @@
 {
   "name": "deep-copy-ts",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "A deep-copy utility function for TypeScript",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -34,8 +34,7 @@
     "husky": "7.0.4",
     "jest": "27.4.5",
     "rimraf": "3.0.2",
-    "typescript": "4.5.4",
-    "tslib": "^2.3.1"
+    "typescript": "4.5.4"
   },
   "husky": {
     "hooks": {
