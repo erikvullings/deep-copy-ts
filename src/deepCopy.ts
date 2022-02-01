@@ -54,15 +54,15 @@ export function deepCopyNoCache <T>(target: T): T
 
   if (target instanceof Array) 
   {
-    const copyOfTarget: any[] = [];
+    const copyOfTarget = [] as any[]
     // cache.set(target, copyOfTarget)
 
-    (target as any[]).forEach((v: any) => {
-      copyOfTarget.push(v);
-    });
+    (target as any[]).forEach ( (v, i) => { copyOfTarget[i] = v; } )
     cache.set(target, copyOfTarget)
+    
+    copyOfTarget.forEach ( (v, i) => { copyOfTarget[i] = deepCopy<any>(v); } )
 
-    return copyOfTarget.map((n: any) => deepCopy<any>(n)) as any;
+    return copyOfTarget as any;
   }
 
   if (typeof target === "object") 
