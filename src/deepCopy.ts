@@ -105,9 +105,12 @@ export interface DeepCopyable<T>
   [CLONE_ME](): T;
 }
 
-// to enable caching.
+// to enable caching
 export function useCache() { usingCache = true; }
-useCache();
+useCache(); 
+// switch on or off by default?
+// switching on would change results for custom classes & self-referential/shared data refs.
+// probably switch off by default? ERIC?
 
 // tracks recursion depth. deepCopy is mutually recursive with deepCopyNoCache.
 let depth = 0;
@@ -128,8 +131,8 @@ export const deepCopy = <T>(target: T): T =>
     v = deepCopyNoCache(target);
   }
 
-  depth--;
-  if (depth === 0) cache.clear();
+  // depth--;
+  // if (depth === 0) cache.clear();
 
   return v;
 }
