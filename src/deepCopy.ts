@@ -7,6 +7,11 @@ import { cloneMap } from "./cloneMap";
 import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
 
+// cache - store target refs to data structure, against cloned versions.
+let cache = new Map<object, any>();
+// default off - backwards compatible.
+let usingCache = false;
+
 const TypedArrayMap: Record<string, Function> = {
   "[object Date]": cloneDate,
   "[object ArrayBuffer]": cloneArrayBuffer,
@@ -49,11 +54,13 @@ export function deepCopyNoCache <T>(target: T): T
 
   if (target instanceof Array) 
   {
-    const copyOfTarget = target.map(v => v) // CHECK HERE!
-    cache.set(target as any, copyOfTarget)
+    let copyOfTarget: any[] = [];
+    // const copyOfTarget = (target as any[]).map(v => v);
+    // cache.set(target, copyOfTarget)
     (target as any[]).forEach((v: any) => {
       copyOfTarget.push(v);
     });
+    cache.set(target, copyOfTarget)
 
     return copyOfTarget.map((n: any) => deepCopy<any>(n)) as any;
   }
@@ -73,14 +80,11 @@ export function deepCopyNoCache <T>(target: T): T
   return target;
 }
 
-// cache - store target refs to data structure, against cloned versions.
-let cache = new Map<object, any>();
-// default off - backwards compatible.
-let usingCache = false;
-
 // Public ****************
 export const CLONE_ME = 'cloneSelf_';
-export interface DeepCopyable<T>
+
+// implement this interface for custom cloneable class.
+export interface DeepCopyable<T> 
 {
   [CLONE_ME](): T;
 }
