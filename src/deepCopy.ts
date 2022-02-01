@@ -54,10 +54,24 @@ export function deepCopyNoCache <T>(target: T): T
 
   if (target instanceof Array) 
   {
-    const copyOfTarget = [] as any[]
-    // cache.set(target, copyOfTarget)
+    const copyOfTarget = [] as any[];
 
-    (target as any[]).forEach ( (v, i) => { copyOfTarget[i] = v; } )
+    /* 
+      cache.set(target, copyOfTarget) => causes problems.
+      
+      - without this line here, all compiles no errors.
+      - with this line here - see errors below.
+
+      <line nums edited manually - as I inserted this comment!>
+      deepCopy.ts(60,5): error TS2349: This expression is not callable.
+      Type 'Map<any, any>' has no call signatures.
+      deepCopy.ts(74,34): error TS7006: Parameter 'v' implicitly has an 'any' type.
+      deepCopy.ts(74,37): error TS7006: Parameter 'i' implicitly has an 'any' type.
+
+      WHY? BASH HEAD AGAINST WALL MANY TIMES... HOURS ON THIS... JUST LUCK I SORTED IT - APPARENTLY.
+    */
+
+    (target as any[]).forEach ( (v, i) => { copyOfTarget[i] = v; } );
     cache.set(target, copyOfTarget)
     
     copyOfTarget.forEach ( (v, i) => { copyOfTarget[i] = deepCopy<any>(v); } )
@@ -70,7 +84,9 @@ export function deepCopyNoCache <T>(target: T): T
     const copyOfTarget = { ...(target as { [key: string|symbol]: any }) } as {
       [key: string|symbol]: any;
     };
+    
     cache.set(target as any, copyOfTarget)
+    
     Object.keys(copyOfTarget).forEach((k) => {
       copyOfTarget[k] = deepCopy<any>(copyOfTarget[k]);
     });
