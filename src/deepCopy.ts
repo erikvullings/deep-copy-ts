@@ -7,20 +7,6 @@ import { cloneMap } from "./cloneMap";
 import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
 
-/*
-class Cache
-{
-  private store = new Map<any, any>() ;
-
-  clear = ()                 =>  this.store.clear();
-  set =   (k: any, v: any)   =>  this.store.set(k,v); 
-  get =   (k: any)           =>  this.store.get(k);
-  has =   (k: any)           =>  this.store.get(k) !== undefined;
-}
-*/
-
-let cache = new Map<object, any>();
-
 const TypedArrayMap: Record<string, Function> = {
   "[object Date]": cloneDate,
   "[object ArrayBuffer]": cloneArrayBuffer,
@@ -40,10 +26,6 @@ const TypedArrayMap: Record<string, Function> = {
   "[object Map]": cloneMap,
 };
 
-
-// maintain backwards compatility - by default cache is off.
-let usingCache = false;
-
 /**
  * Deep copy function for TypeScript.
  * @param T Generic type of target/copied value.
@@ -58,9 +40,6 @@ export function deepCopyNoCache <T>(target: T): T
   const tag = Object.prototype.toString.call(target);
   if (TypedArrayMap[tag]) return TypedArrayMap[tag](target);
   
-  // ERIK - IS DATE NOW HANDLED ABOVE ??? Ping me can you. DITTO REGEXP...
-  // ALSO ERIK - ANY NEED TO CACHE THE ABOVE? PING ME!
-
   if ( typeof (target as any)[CLONE_ME] === 'function')
   {
     const copyOfTarget = (target as any)[CLONE_ME]() as T;
@@ -81,8 +60,8 @@ export function deepCopyNoCache <T>(target: T): T
 
   if (typeof target === "object") 
   {
-    const copyOfTarget = { ...(target as { [key: string]: any }) } as {
-      [key: string]: any;
+    const copyOfTarget = { ...(target as { [key: string|symbol]: any }) } as {
+      [key: string|symbol]: any;
     };
     cache.set(target as any, copyOfTarget)
     Object.keys(copyOfTarget).forEach((k) => {
@@ -94,23 +73,31 @@ export function deepCopyNoCache <T>(target: T): T
   return target;
 }
 
-// Public I/F Below.
+// cache - store target refs to data structure, against cloned versions.
+let cache = new Map<object, any>();
+// default off - backwards compatible.
+let usingCache = false;
+
+// Public ****************
+export const CLONE_ME = 'cloneSelf_';
 export interface DeepCopyable<T>
 {
   [CLONE_ME](): T;
 }
 
+// to enable caching.
+export function useCache() { usingCache = true; }
+
 // tracks recursion depth. deepCopy is mutually recursive with deepCopyNoCache.
 let depth = 0;
 
-export function useCache() { usingCache = true; }
-export const CLONE_ME = '_cloneMe';
 export const deepCopy = <T>(target: T): T =>
 {
   let v: T;
 
   if (depth === 0) cache.clear();
   depth++;
+
   if ( usingCache && cache.has(target as any) ) 
   {    
 	v = cache.get(target as any);
