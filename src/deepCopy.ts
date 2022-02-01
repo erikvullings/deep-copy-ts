@@ -8,7 +8,7 @@ import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
 
 // cache - store target refs to data structure, against cloned versions.
-let cache = new Map<object, any>();
+let cache = new Map<any, any>();
 // default off - backwards compatible.
 let usingCache = false;
 
@@ -54,9 +54,9 @@ export function deepCopyNoCache <T>(target: T): T
 
   if (target instanceof Array) 
   {
-    let copyOfTarget: any[] = [];
-    // const copyOfTarget = (target as any[]).map(v => v);
+    const copyOfTarget: any[] = [];
     // cache.set(target, copyOfTarget)
+
     (target as any[]).forEach((v: any) => {
       copyOfTarget.push(v);
     });
@@ -91,6 +91,7 @@ export interface DeepCopyable<T>
 
 // to enable caching.
 export function useCache() { usingCache = true; }
+useCache();
 
 // tracks recursion depth. deepCopy is mutually recursive with deepCopyNoCache.
 let depth = 0;
@@ -102,9 +103,9 @@ export const deepCopy = <T>(target: T): T =>
   if (depth === 0) cache.clear();
   depth++;
 
-  if ( usingCache && cache.has(target as any) ) 
+  if ( usingCache && cache.has(target) ) 
   {    
-	v = cache.get(target as any);
+	   v = cache.get(target);
   }  
   else
   {
