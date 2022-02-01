@@ -47,17 +47,17 @@ export function deepCopyNoCache <T>(target: T): T
   
   if ( typeof (target as any)[CLONE_ME] === 'function')
   {
-    const copyOfTarget = (target as any)[CLONE_ME]() as T;
-    cache.set(target as any, copyOfTarget)
-    return copyOfTarget;
+    const cp = (target as any)[CLONE_ME]() as T;
+    cache.set(target as any, cp)
+    return cp;
   }
 
   if (target instanceof Array) 
   {
-    const copyOfTarget = [] as any[];
+    const cp = [] as any[];
 
     /* 
-      cache.set(target, copyOfTarget) => causes problems.
+      cache.set(target, cp) => causes problems.
       
       - without this line here, all compiles no errors.
       - with this line here - see errors below.
@@ -71,26 +71,26 @@ export function deepCopyNoCache <T>(target: T): T
       WHY? BASH HEAD AGAINST WALL MANY TIMES... HOURS ON THIS... JUST LUCK I SORTED IT - APPARENTLY.
     */
 
-    (target as any[]).forEach ( (v, i) => { copyOfTarget[i] = v; } );
-    cache.set(target, copyOfTarget)
+    (target as any[]).forEach ( (v, i) => { cp[i] = v; } );
+    cache.set(target, cp)
     
-    copyOfTarget.forEach ( (v, i) => { copyOfTarget[i] = deepCopy<any>(v); } )
+    cp.forEach ( (v, i) => { cp[i] = deepCopy<any>(v); } )
 
-    return copyOfTarget as any;
+    return cp as any;
   }
 
   if (typeof target === "object") 
   {
-    const copyOfTarget = { ...(target as { [key: string|symbol]: any }) } as {
+    const cp = { ...(target as { [key: string|symbol]: any }) } as {
       [key: string|symbol]: any;
     };
     
-    cache.set(target as any, copyOfTarget)
+    cache.set(target as any, cp)
     
-    Object.keys(copyOfTarget).forEach((k) => {
-      copyOfTarget[k] = deepCopy<any>(copyOfTarget[k]);
+    Object.keys(cp).forEach((k) => {
+      cp[k] = deepCopy<any>(cp[k]);
     });
-    return copyOfTarget as T;
+    return cp as T;
   }
   
   return target;
