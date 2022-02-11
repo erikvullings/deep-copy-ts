@@ -8,7 +8,7 @@ import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
 
 // cache - store target refs to data structure, against cloned versions.
-let cache = new Map<any, any>();
+const cache = new Map<unknown, unknown>();
 // default off - backwards compatible.
 let usingCache = false;
 
@@ -38,22 +38,19 @@ const TypedArrayMap: Record<string, Function> = {
  * @see Original source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
  * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg
  */
-export function deepCopyNoCache <T>(target: T): T 
-{
-  if ( !target ) return target;
-  
+export function deepCopyNoCache<T>(target: T): T {
+  if (!target) return target;
+
   const tag = Object.prototype.toString.call(target);
   if (TypedArrayMap[tag]) return TypedArrayMap[tag](target);
-  
-  if ( typeof (target as any)[CLONE_ME] === 'function')
-  {
+
+  if (typeof (target as any)[CLONE_ME] === "function") {
     const cp = (target as any)[CLONE_ME]() as T;
-    cache.set(target as any, cp)
+    cache.set(target as any, cp);
     return cp;
   }
 
-  if (target instanceof Array) 
-  {
+  if (target instanceof Array) {
     const cp = [] as any[];
 
     /* 
@@ -71,43 +68,47 @@ export function deepCopyNoCache <T>(target: T): T
       WHY? BASH HEAD AGAINST WALL MANY TIMES... HOURS ON THIS... JUST LUCK I SORTED IT - APPARENTLY.
     */
 
-    (target as any[]).forEach ( (v, i) => { cp[i] = v; } );
-    cache.set(target, cp)
-    
-    cp.forEach ( (v, i) => { cp[i] = deepCopy<any>(v); } )
+    (target as any[]).forEach((v, i) => {
+      cp[i] = v;
+    });
+    cache.set(target, cp);
+
+    cp.forEach((v, i) => {
+      cp[i] = deepCopy<any>(v);
+    });
 
     return cp as any;
   }
 
-  if (typeof target === "object") 
-  {
-    const cp = { ...(target as { [key: string|symbol]: any }) } as {
-      [key: string|symbol]: any;
+  if (typeof target === "object") {
+    const cp = { ...(target as { [key: string | symbol]: any }) } as {
+      [key: string | symbol]: any;
     };
-    
-    cache.set(target as any, cp)
-    
+
+    cache.set(target as any, cp);
+
     Object.keys(cp).forEach((k) => {
       cp[k] = deepCopy<any>(cp[k]);
     });
     return cp as T;
   }
-  
+
   return target;
 }
 
 // Public ****************
-export const CLONE_ME = 'cloneSelf_';
+export const CLONE_ME = "cloneSelf_";
 
 // implement this interface for custom cloneable class.
-export interface DeepCopyable<T> 
-{
+export interface DeepCopyable<T> {
   [CLONE_ME](): T;
 }
 
 // to enable caching
-export function useCache() { usingCache = true; }
-useCache(); 
+export function useCache() {
+  usingCache = true;
+}
+useCache();
 // switch on or off by default?
 // switching on would change results for custom classes & self-referential/shared data refs.
 // probably switch off by default? ERIC?
@@ -115,19 +116,15 @@ useCache();
 // tracks recursion depth. deepCopy is mutually recursive with deepCopyNoCache.
 let depth = 0;
 
-export const deepCopy = <T>(target: T): T =>
-{
+export const deepCopy = <T>(target: T): T => {
   let v: T;
 
   if (depth === 0) cache.clear();
   depth++;
 
-  if ( usingCache && cache.has(target) ) 
-  {    
-	   v = cache.get(target);
-  }  
-  else
-  {
+  if (usingCache && cache.has(target)) {
+    v = cache.get(target);
+  } else {
     v = deepCopyNoCache(target);
   }
 
@@ -135,4 +132,4 @@ export const deepCopy = <T>(target: T): T =>
   // if (depth === 0) cache.clear();
 
   return v;
-}
+};
