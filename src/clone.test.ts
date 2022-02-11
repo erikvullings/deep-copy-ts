@@ -22,7 +22,7 @@
 // // nb: as it stands, shared refs to objects lead to NEW object in each case, even if shared within a data structure in original. TBU.
 
 // //***
-import { deepCopy, CLONE_ME, DeepClonable } from './deepCopy'
+import { deepCopy, CLONE_ME, DeepCopyable } from './deepCopy'
 
 //*** debug assistance.
 let lg_debug = false;
@@ -98,6 +98,7 @@ const mkObject = (leaf: any, depth: number, shared: boolean): any =>
 	return rval;
 }
 
+
 const mkArray = (n: number, o: any, shared: boolean): any => 
 {
 	let arr: any[] = [];
@@ -116,7 +117,7 @@ const objWithArrWithObj = (shared: boolean): any =>
 	let firstObj = mkObject('base', OBJ_DEPTH, false)
 	
 	// add random stuff to play - here!
-	firstObj.xxx = 100;
+	firstObj.xxx = 100 ;
 	firstObj.zzz = null;
 	// end
 
@@ -344,7 +345,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
 
 const MAX_SELVES = 5;
 
-class CustomClass implements DeepClonable<CustomClass>
+class CustomClass implements DeepCopyable<CustomClass>
 {
 	private value: number;
 	private myselves: CustomClass[] = [];

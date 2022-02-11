@@ -1,4 +1,4 @@
-// nb: if you switch on caching - do not use in multi-threaded envs.
+// nb: if you switch on caching - do not use in multi-threaded environments.
 
 import { cloneArrayBuffer } from "./cloneArrayBuffer";
 import { cloneDataView } from "./cloneDataView";
