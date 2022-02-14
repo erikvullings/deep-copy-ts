@@ -1,16 +1,8 @@
-/**
-	Testing clone - basic approach - clone it, change the orginal, show the clone has not changed.
-	type coverage:
-	- basics: number, string, boolean ... nulls ...
-	- simple composites: flat object, flat array.
-	- class (with cloneMeFn) - flat.
-	then:
-	- array - object - multiple sub-nesting.
-	- class - derived (two levels) from base class with 'cloneMe' implemented.
-	- class - hierarchy of class objects with refs - up and down (child, parent) with array/object as well.
-	Consider:
-	Map? Other classes?
-	Enum?
+/*
+  the tests here cover testing of more complex data structure - objects within arrays within objects, etc.
+  also: correct cloning of shared data (i.e. the clone has its own copy, but data is shared in the same place)
+  also: correct cloning of cyclic data structures (a->b->a .. etc.)
+  also: cloning of custom classes (by deferring the cloning to the class itself).
 */
 
 // nb: as it stands, shared refs to objects lead to NEW object in each case, even if shared within a data structure in original. TBU.
@@ -20,21 +12,11 @@ import { deepCopy, CLONE_ME, DeepCopyable } from "./deepCopy";
 //*** debug assistance.
 let lg_debug = false;
 
-export const dbg = (v: boolean) => (lg_debug = v);
-export const lg = (...args: unknown[]) => {
+//  utility.
+const lg = (...args: unknown[]) => {
   if (lg_debug) console.log(...args);
 };
-
-// misc.
-export const isFn = (fn: unknown): boolean => typeof fn === "function";
-
-export const isPrim = (v: unknown): boolean => {
-  const t = typeof v;
-  return (
-    t in
-    ["number", "bigint", "string", "boolean", "null", "undefined", "symbol"]
-  );
-};
+const isFn = (fn: unknown): boolean => typeof fn === "function";
 
 // json clone, compare, etc. only work on basic data structures - i.e. will not work with class created objects (with methods).
 // used for checking or partial checking of results, where possible.
@@ -44,18 +26,18 @@ export const lgJson = (v: unknown, msg = "lgJson:\n") => {
 
 export const jsonClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 
-export const jsonEq = (a: unknown, b: unknown) =>
+export const jsonEq = <T>(a: T, b: T): boolean =>
   a !== b && JSON.stringify(a) === JSON.stringify(b);
 
 export const jsonWithFnsEq = (
   a: unknown,
   b: unknown,
-  fnArr: unknown[]
+  fnArr: string[]
 ): boolean => {
   let ret = jsonEq(a, b);
 
   // top level fns only - tested here.
-  fnArr.forEach((fn) => {
+  fnArr.forEach((fn ) => {
     if (isFn(a[fn])) {
       // if a has the fn, b should have same fn.
       ret = ret && isFn(b[fn]);
@@ -75,14 +57,16 @@ const assJsonEq = (a: unknown, b: unknown) => {
 };
 
 // methods in objects a, b passed explicitly to facilitate testing.
-const assJsonWithFnsEq = (a: unknown, b: unknown, fnArr: unknown[]) =>
+const assJsonWithFnsEq = (a: unknown, b: unknown, fnArr: string[]) =>
   ass(jsonWithFnsEq(a, b, fnArr), "error in assJsonWithFnsEq");
 
 // *** test data - building structures to use in tests.
-let ARR_SZ = 45; // arbitrary - can change - watch out for test timeouts tho.
-let OBJ_DEPTH = 5; // arbitrary - can change - watch out for test timeouts tho - exponential 2**OBJ_DEPTH time dependency.
+const ARR_SZ = 45; // arbitrary - can change - watch out for test timeouts tho.
+const OBJ_DEPTH = 5; // arbitrary - can change - watch out for test timeouts tho - exponential 2**OBJ_DEPTH time dependency.
 
-const mkObject = (leaf: unknown, depth: number, shared: boolean): unknown => {
+type LRTreeStruct<T> = { [key: string ]: LRTreeStruct<T> } | T;
+
+const mkObject = <T>(leaf: T, depth: number, shared: boolean): LRTreeStruct<T> => {
   let rval = undefined;
 
   if (depth === 0) rval = leaf;
@@ -100,8 +84,8 @@ const mkObject = (leaf: unknown, depth: number, shared: boolean): unknown => {
   return rval;
 };
 
-const mkArray = (n: number, o: unknown, shared: boolean): unknown => {
-  const arr: unknown[] = [];
+const mkArray = <T>(n: number, o: T, shared: boolean): T[] => {
+  const arr: T[] = [];
 
   for (let i = 0; i < n; i++) {
     arr[i] = o;
@@ -111,17 +95,13 @@ const mkArray = (n: number, o: unknown, shared: boolean): unknown => {
   return arr;
 };
 
-const objWithArrWithObj = (shared: boolean): unknown => {
-  const firstObj = mkObject("base", OBJ_DEPTH, false);
+type ArrLRTreeStruct = LRTreeStruct<string>[];
+type NestedLRTreeStruct = LRTreeStruct<ArrLRTreeStruct>
 
-  // add random stuff to play - here!
-  firstObj.xxx = 100;
-  firstObj.zzz = null;
-  // end
-
-  const arr = mkArray(ARR_SZ, firstObj, true);
-  // const deeperArr = mkArray(ARR_SZ, arr, false);
-  const finalObj = mkObject(arr, OBJ_DEPTH, shared);
+const objWithArrWithObj = (shared: boolean): NestedLRTreeStruct => {
+  const firstObj: LRTreeStruct<string> = mkObject("base", OBJ_DEPTH, false);
+  const arr: ArrLRTreeStruct = mkArray(ARR_SZ, firstObj, true);
+  const finalObj: NestedLRTreeStruct = mkObject(arr, OBJ_DEPTH, shared);
 
   return finalObj;
 };
@@ -148,6 +128,7 @@ describe(`*** testing clone function - objects/arrays and combinations\nno cycle
   it("** clone obj with arrays with objects", function () {
     const orig = objWithArrWithObj(false);
     const clone = deepCopy(orig);
+
     assJsonEq(orig, clone);
   });
 
@@ -155,12 +136,11 @@ describe(`*** testing clone function - objects/arrays and combinations\nno cycle
     const orig = objWithArrWithObj(false);
     const clone = deepCopy(orig);
 
-    clone.sageAdvice =
-      "a herb in the hand is worth two in the acme food store (names changed to hide identity)";
-
+    orig["left"] = null;    
     ass(!jsonEq(orig, clone));
   });
 });
+
 
 const inlineObjectWithFn = () => {
   const obj = {
@@ -169,13 +149,10 @@ const inlineObjectWithFn = () => {
     str: "hello world",
 
     // nb: this fn is enumerable (Object.keys) whereas the equivalent in a class created object seems not to be!
-    [CLONE_ME]() {
-      let p = <typeof obj>{};
+    [CLONE_ME]() 
+    {
+      const p = jsonClone(obj);
 
-      // this will only work is the non-fn props of obj are Json clonable.
-      p = jsonClone(obj);
-
-      // let's check.
       assJsonEq(p, obj);
       p[CLONE_ME] = obj[CLONE_ME]; // this!
 
@@ -185,8 +162,8 @@ const inlineObjectWithFn = () => {
   return obj;
 };
 
-// nb: using the 'fn = () => value' form of function means the 'fn' is an own-property of the object created new-ing a class.
 
+// nb: using the 'fn = () => value' form of function means the 'fn' is an own-property of the object created new-ing a class.
 const LEN = "lenFunction";
 
 class BasicClass {
@@ -239,7 +216,7 @@ class ExtendBasicClass extends BasicClass {
   }
 }
 
-function deepClass(): unknown {
+function deepClass() {
   const o = {
     arr: [
       0,
@@ -281,21 +258,21 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     const orig = inlineObjectWithFn();
     const clone = deepCopy(orig);
 
-    assJsonWithFnsEq(orig, clone, [CLONE_ME]);
+      assJsonWithFnsEq(orig, clone, [CLONE_ME]);
   });
 
-  // TBD: recheck, not entirely happy with <unknown>function ...
   it("** clone simple object with fn - force error (sanity check)", function () {
     const orig = inlineObjectWithFn();
     const clone = deepCopy(orig);
-    clone[CLONE_ME] = <unknown>function () {};
 
+    clone.str = "world, hello! as Yoda would say"
+    
     ass(!jsonWithFnsEq(orig, clone, [CLONE_ME]));
   });
 
   it("** 'new' class object with fn", function () {
     const orig = new BasicClass(ARR_SZ);
-    const clone = deepCopy(orig);
+    const clone = deepCopy(orig) as BasicClass;
 
     lg("Orig: ", orig);
     lg("Clone: ", clone);
@@ -322,7 +299,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     ass(orig !== clone);
 
     // More TBD.
-    assJsonWithFnsEq(orig.arr[3].anotherarr[7], clone.arr[3].anotherarr[7], [
+    assJsonWithFnsEq(orig.arr[3]["anotherarr"][7], clone.arr[3]["anotherarr"][7], [
       CLONE_ME,
       LEN,
       FN1,
@@ -335,13 +312,13 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     const orig = deepClass();
     const clone = deepCopy(orig);
 
-    clone.arr[3].anotherarr[7].setString("something-different");
+    clone.arr[3]["anotherarr"][7].setString("something-different");
 
     ass(orig !== clone);
     ass(!jsonEq(orig, clone));
 
     ass(
-      !jsonWithFnsEq(orig.arr[3].anotherarr[7], clone.arr[3].anotherarr[7], [
+      !jsonWithFnsEq(orig.arr[3]["anotherarr"][7], clone.arr[3]["anotherarr"][7], [
         CLONE_ME,
         LEN,
         FN1,
@@ -377,18 +354,20 @@ class CustomClass implements DeepCopyable<CustomClass> {
 const VAL = 1;
 const BIG_VAL = 99999;
 
+type MISC_UNDEF<T> = T | undefined;
+type MISC = { a: number, b: number, self: MISC_UNDEF<MISC> }
+
 // Tests (Part 3)
 describe(`*** testing clone function - dealing with cycles in data structures, shared references, etc.`, function () {
   it("** simple object with cycle", function () {
-    const orig = {
+    
+    const orig: MISC = {
       a: VAL,
       b: 2,
-      self: 0 as { [key: string]: unknown } | number,
+      self: undefined
     };
 
-    // self ref. cycle.
     orig.self = orig;
-
     ass(orig === orig.self);
 
     const clone = deepCopy(orig);
@@ -447,12 +426,10 @@ describe(`*** testing clone function - dealing with cycles in data structures, s
     ass(clone !== orig, "3");
     ass(clone[0] === clone[1] && clone[1] === clone[2], "4");
 
-    // lg(clone);
-    // lg(clone[3])
     ass(clone === clone[3], "5");
 
-    orig[0].a = BIG_VAL;
-    ass(clone[0].a === VAL, "6");
+    orig[0]["a"] = BIG_VAL;
+    ass(clone[0]["a"] === VAL, "6");
   });
 
   it("** Custom self referential class", function () {
