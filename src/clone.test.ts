@@ -1,25 +1,25 @@
 /*
-  the tests here cover testing of more complex data structure - objects within arrays within objects, etc.
-  also: correct cloning of shared data (i.e. the clone has its own copy, but data is shared in the same place)
-  also: correct cloning of cyclic data structures (a->b->a .. etc.)
-  also: cloning of custom classes (by deferring the cloning to the class itself).
+  the tests here cover testing of more complex data structure 
+  - objects within arrays within objects, etc.
+  - also: correct cloning of shared data (i.e. the clone has its own copy, but data is shared in the same place)
+  - also: correct cloning of cyclic data structures (a->b->a .. etc.)
+  - also: cloning of custom classes (by deferring the cloning to the class itself).
 */
 
 // nb: as it stands, shared refs to objects lead to NEW object in each case, even if shared within a data structure in original. TBU.
 
 import { deepCopy, CLONE_ME, DeepCopyable } from "./deepCopy";
 
-//*** debug assistance.
+//**  utility.
 const lg_debug = false;
-
-//  utility.
 const lg = (...args: unknown[]) => {
   if (lg_debug) console.log(...args);
 };
-const isFn = (fn: unknown): boolean => typeof fn === "function";
 
+const isFn = (fn: unknown): boolean => typeof fn === "function";
 // json clone, compare, etc. only work on basic data structures - i.e. will not work with class created objects (with methods).
 // used for checking or partial checking of results, where possible.
+
 export const lgJson = (v: unknown, msg = "lgJson:\n") => {
   lg(msg, JSON.stringify(v, null, " "));
 };
@@ -29,7 +29,7 @@ export const jsonClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 export const jsonEq = <T>(a: T, b: T): boolean =>
   a !== b && JSON.stringify(a) === JSON.stringify(b);
 
-export const jsonWithFnsEq = (
+  export const jsonWithFnsEq = (
   a: unknown,
   b: unknown,
   fnArr: string[]
@@ -48,7 +48,6 @@ export const jsonWithFnsEq = (
   return ret;
 };
 
-// assertions for tests.
 const ass = (b: boolean, m = "oops") => {
   if (!b) throw "assertion error: " + m;
 };
@@ -61,8 +60,8 @@ const assJsonWithFnsEq = (a: unknown, b: unknown, fnArr: string[]) =>
   ass(jsonWithFnsEq(a, b, fnArr), "error in assJsonWithFnsEq");
 
 // *** test data - building structures to use in tests.
-const ARR_SZ = 45; // arbitrary - can change - watch out for test timeouts tho.
-const OBJ_DEPTH = 5; // arbitrary - can change - watch out for test timeouts tho - exponential 2**OBJ_DEPTH time dependency.
+const ARR_SZ = 45;    // arbitrary - can change - watch out for test timeouts tho.
+const OBJ_DEPTH = 5;  // arbitrary - can change - watch out for test timeouts tho - exponential 2**OBJ_DEPTH time dependency.
 
 type LRTreeStruct<T> = { [key: string ]: LRTreeStruct<T> } | T;
 
