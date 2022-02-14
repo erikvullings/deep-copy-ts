@@ -10,7 +10,7 @@
 import { deepCopy, CLONE_ME, DeepCopyable } from "./deepCopy";
 
 //*** debug assistance.
-let lg_debug = false;
+const lg_debug = false;
 
 //  utility.
 const lg = (...args: unknown[]) => {
