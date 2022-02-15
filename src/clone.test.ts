@@ -8,7 +8,9 @@
 
 // nb: as it stands, shared refs to objects lead to NEW object in each case, even if shared within a data structure in original. TBU.
 
-import { deepCopy, CLONE_ME, DeepCopyable } from "./deepCopy";
+import {useCache, deepCopy, CLONE_SELF, IDeepCopy} from "./deepCopy";
+
+useCache(); // enable cloning of cyclic data and shared data.
 
 //**  utility.
 const lg_debug = false;
@@ -17,9 +19,9 @@ const lg = (...args: unknown[]) => {
 };
 
 const isFn = (fn: unknown): boolean => typeof fn === "function";
+
 // json clone, compare, etc. only work on basic data structures - i.e. will not work with class created objects (with methods).
 // used for checking or partial checking of results, where possible.
-
 export const lgJson = (v: unknown, msg = "lgJson:\n") => {
   lg(msg, JSON.stringify(v, null, " "));
 };
@@ -140,7 +142,6 @@ describe(`*** testing clone function - objects/arrays and combinations\nno cycle
   });
 });
 
-
 const inlineObjectWithFn = () => {
   const obj = {
     arr: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -148,12 +149,12 @@ const inlineObjectWithFn = () => {
     str: "hello world",
 
     // nb: this fn is enumerable (Object.keys) whereas the equivalent in a class created object seems not to be!
-    [CLONE_ME]() 
+    [CLONE_SELF]() 
     {
       const p = jsonClone(obj);
 
       assJsonEq(p, obj);
-      p[CLONE_ME] = obj[CLONE_ME]; // this!
+      p[CLONE_SELF] = obj[CLONE_SELF]; // this!
 
       return p;
     },
@@ -169,7 +170,7 @@ class BasicClass {
   private n: unknown[] = [];
 
   // clone approach used here:
-  // [CLONE_ME] uses ctor to create new object and then clones
+  // [CLONE_SELF] uses ctor to create new object and then clones
   // whatever other state is necessary to complete the class clone.
 
   constructor(n: number) {
@@ -180,9 +181,9 @@ class BasicClass {
 
   [LEN] = () => this.n.length;
 
-  // nb: this caused a typescript error when clone.ts declared export const CLONE_ME = 'xxxx' *** as string *** (as string was the issue)
-  // in conjunction with using (arrow fn) "[CLONE_ME] = () =>" [directly below]. Hence now ordinary Fn.
-  [CLONE_ME](): BasicClass {
+  // nb: this caused a typescript error when clone.ts declared export const CLONE_SELF = 'xxxx' *** as string *** (as string was the issue)
+  // in conjunction with using (arrow fn) "[CLONE_SELF] = () =>" [directly below]. Hence now ordinary Fn.
+  [CLONE_SELF](): BasicClass {
     const clone = new BasicClass(this.n.length);
     return clone;
   }
@@ -209,7 +210,7 @@ class ExtendBasicClass extends BasicClass {
     return "another pretty uninteresting function - non arrow fn";
   }
 
-  [CLONE_ME]() {
+  [CLONE_SELF]() {
     const clone = new ExtendBasicClass(this[LEN](), this.s, deepCopy(this.o));
     return clone;
   }
@@ -257,7 +258,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     const orig = inlineObjectWithFn();
     const clone = deepCopy(orig);
 
-      assJsonWithFnsEq(orig, clone, [CLONE_ME]);
+      assJsonWithFnsEq(orig, clone, [CLONE_SELF]);
   });
 
   it("** clone simple object with fn - force error (sanity check)", function () {
@@ -266,7 +267,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
 
     clone.str = "world, hello! as Yoda would say"
     
-    ass(!jsonWithFnsEq(orig, clone, [CLONE_ME]));
+    ass(!jsonWithFnsEq(orig, clone, [CLONE_SELF]));
   });
 
   it("** 'new' class object with fn", function () {
@@ -276,7 +277,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     lg("Orig: ", orig);
     lg("Clone: ", clone);
 
-    assJsonWithFnsEq(orig, clone, [CLONE_ME, LEN]);
+    assJsonWithFnsEq(orig, clone, [CLONE_SELF, LEN]);
   });
 
   it("** 'new' further derived class object with fns and other complex nested properties", function () {
@@ -287,7 +288,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     );
     const clone = deepCopy(orig);
 
-    assJsonWithFnsEq(orig, clone, [CLONE_ME, LEN, FN1, FN2, SET_STRING]);
+    assJsonWithFnsEq(orig, clone, [CLONE_SELF, LEN, FN1, FN2, SET_STRING]);
   });
 
   it("** new class embedded deeply in data structure (arrays, objects)", function () {
@@ -299,7 +300,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
 
     // More TBD.
     assJsonWithFnsEq(orig.arr[3]["anotherarr"][7], clone.arr[3]["anotherarr"][7], [
-      CLONE_ME,
+      CLONE_SELF,
       LEN,
       FN1,
       FN2,
@@ -318,7 +319,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
 
     ass(
       !jsonWithFnsEq(orig.arr[3]["anotherarr"][7], clone.arr[3]["anotherarr"][7], [
-        CLONE_ME,
+        CLONE_SELF,
         LEN,
         FN1,
         FN2,
@@ -330,12 +331,13 @@ describe(`*** testing clone function - objects with fns (methods), using variety
 
 const MAX_SELVES = 5;
 
-class CustomClass implements DeepCopyable<CustomClass> {
+type  DeepCopyCC = IDeepCopy<CustomClass>;
+
+class CustomClass implements DeepCopyCC {
   private value: number;
   private myselves: CustomClass[] = [];
 
   constructor(value: number) {
-    // self referential.
     for (let i = 0; i < MAX_SELVES; i++) this.myselves[i] = this;
     this.value = value;
   }
@@ -345,7 +347,7 @@ class CustomClass implements DeepCopyable<CustomClass> {
 
   val = () => this.value;
 
-  [CLONE_ME]() {
+  cloneSelf = (): CustomClass => {
     return new CustomClass(this.value);
   }
 }
