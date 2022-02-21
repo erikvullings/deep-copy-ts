@@ -1,29 +1,3 @@
-/*
-Unlike classes, interfaces exist only at compile - time, they are not included into the resulting JavaScript, so you cannot do an instanceof check.
-
-You could make IWalkingAnimal a subclass of Animal(and use instanceof), or you could check if the object in question has a walk method:
-
-if (animal['walk']) { }
-You can wrap this in a user defined type guard (so that the compiler can narrow the type when used in an if statement, just like with instanceof).
-
-/**
-* User Defined Type Guard!
-*/
-function canWalk(arg: Animal): arg is IWalkingAnimal {
-  return (arg as IWalkingAnimal).walk !== undefined;
-}
-
-
-private moveAnimal(animal: Animal) {
-  if (canWalk(animal)) {
-    animal.walk();  // compiler knows it can walk now
-  }
-}
-
-CONSIDER THE ABOVE WHEN AWAKE - MARK. 
-*/ 
-
-
 // ERIC: Qs: Copy vs. Clone... we should choose one term or the other - do you think? 
 // Of course, this could cause back compatibility issues - so perhaps don't worry about it?
 // Mark -> Eric - you decide :).
@@ -47,7 +21,8 @@ const cache = new Map<unknown, unknown>();
 // default off - backwards compatible.
 let usingCache = false;
 
-const TypedArrayMap: Record<string, Function> = {
+const TypedArrayMap = {         
+  // Erik: had issues with Record<string, Function> - ts moaned about Function... being too 'loose' a type.
   "[object Date]": cloneDate,
   "[object ArrayBuffer]": cloneArrayBuffer,
   "[object DataView]": cloneDataView,
@@ -65,13 +40,14 @@ const TypedArrayMap: Record<string, Function> = {
   "[object RegExp]": cloneRegExp,
   "[object Map]": cloneMap,
 };
+// Erik: inferred type for object above...
 
 /**
  * Deep copy function for TypeScript.
  * @param T Generic type of target/copied value.
  * @param target Target value to be copied.
  * @see Original source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
- * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg
+ * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg ??? Erik: Update? ***
  */
 
 export function deepCopyNoCache<T>(target: T): T {
@@ -84,51 +60,35 @@ export function deepCopyNoCache<T>(target: T): T {
         ( typeof (target as unknown as IDeepCopy<T>).cloneSelf === 'function' )
   )
   {
-    const cp = (target as any).cloneSelf() as T;
-    cache.set(target as any, cp);
+    const cp = (target as unknown as IDeepCopy<T>).cloneSelf() as T;
+    cache.set(target as unknown, cp);
     return cp;
   }
 
   if (target instanceof Array) {
-    const cp = [] as any[];
-    /* TODO: Delete this comment, or relocate elsewhere...
-      cache.set(target, cp) => causes problems.
-      
-      - without this line here, all compiles no errors.
-      - with this line here - see errors below.
+    const cp = [] as unknown[];
 
-      <line nums edited manually - as I inserted this comment!>
-      deepCopy.ts(60,5): error TS2349: This expression is not callable.
-      Type 'Map<any, any>' has no call signatures.
-      deepCopy.ts(74,34): error TS7006: Parameter 'v' implicitly has an 'any' type.
-      deepCopy.ts(74,37): error TS7006: Parameter 'i' implicitly has an 'any' type.
-
-      WHY? BASH HEAD AGAINST WALL MANY TIMES... HOURS ON THIS... JUST LUCK I SORTED IT - APPARENTLY.
-    */
-
-    (target as any[]).forEach((v, i) => {
+    (target as unknown[]).forEach((v, i) => {
       cp[i] = v;
     });
     cache.set(target, cp);
 
     cp.forEach((v, i) => {
-      cp[i] = deepCopy<any>(v);
+      cp[i] = deepCopy<unknown>(v);
     });
 
-    return cp as any;
+    return cp as unknown as T;
   }
 
   if (typeof target === "object") {
-    const cp = { ...(target as { [key: string | symbol]: any }) } as {
-      [key: string | symbol]: any;
-    };
+    const cp = { ...(target as unknown as { [key: string | symbol]: unknown } )};
 
     cache.set(target, cp);
 
     Object.keys(cp).forEach((k) => {
-      cp[k] = deepCopy<any>(cp[k]);
+      cp[k] = deepCopy<unknown>(cp[k]);
     });
-    return cp as T;
+    return cp as unknown as T;
   }
 
   return target;
@@ -161,7 +121,7 @@ export const deepCopy = <T>(target: T): T => {
   depth++;
 
   if (usingCache && cache.has(target)) {
-    val = cache.get(target);
+    val = cache.get( target ) as T;
   } else {
     val = deepCopyNoCache(target);
   }
