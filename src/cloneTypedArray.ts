@@ -49,8 +49,9 @@ export function cloneTypedArray(typedArray: TypedArrayType): TypedArrayType {
   try {
     TypedArrayMap["[object BigInt64Array]"] = BigInt64Array;
     TypedArrayMap["[object BigUint64Array]"] = BigUint64Array;
-    // eslint-disable-next-line no-empty
-  } catch (e) {}
+  } catch (e) {
+    null;
+  }
 
   const buffer = cloneArrayBuffer(typedArray.buffer);
   return new TypedArrayMap[Object.prototype.toString.call(typedArray)](
