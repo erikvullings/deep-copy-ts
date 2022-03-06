@@ -35,7 +35,7 @@ const TypedArrayMap: Record<string, TypedArrayConstructorType> = {
   "[object Uint8Array]": Uint8Array,
   "[object Uint16Array]": Uint16Array,
   "[object Uint32Array]": Uint32Array,
-  "[object Uint8ClampedArray]": Uint8ClampedArray
+  "[object Uint8ClampedArray]": Uint8ClampedArray,
 };
 
 /**
@@ -46,11 +46,12 @@ const TypedArrayMap: Record<string, TypedArrayConstructorType> = {
  * @returns {Object} Returns the cloned typed array.
  */
 export function cloneTypedArray(typedArray: TypedArrayType): TypedArrayType {
-  try{
+  try {
     TypedArrayMap["[object BigInt64Array]"] = BigInt64Array;
-    TypedArrayMap["[object BigUint64Array]"] = BigUint64Array;  
-  }catch(e){}
-  
+    TypedArrayMap["[object BigUint64Array]"] = BigUint64Array;
+    // eslint-disable-next-line no-empty
+  } catch (e) {}
+
   const buffer = cloneArrayBuffer(typedArray.buffer);
   return new TypedArrayMap[Object.prototype.toString.call(typedArray)](
     buffer,
