@@ -1,9 +1,11 @@
-// ERIC: Qs: Copy vs. Clone... we should choose one term or the other - do you think? 
+// Erik: Qs: Copy vs. Clone... we should choose one term or the other - do you think?
 // Of course, this could cause back compatibility issues - so perhaps don't worry about it?
-// Mark -> Eric - you decide :).
+// Mark -> Erik - you decide :).
+// To rename it from copy to clone is a breaking change, but I do not believe it is worth pain for the users
+// of this function. So let's not change it.
 
-// module that provides facilities to deepCopy complex TS datastructures, including those with cyclic data, shared data and custom clasess 
-// [ERIC: add some description of the ArrayBuffer etc. - I've not these so am unsure exactly what to put ... Mark-> Eric - over to you!.
+// module that provides facilities to deepCopy complex TS datastructures, including those with cyclic data, shared data and custom clasess
+// [Erik: add some description of the ArrayBuffer etc. - I've not these so am unsure exactly what to put ... Mark-> Erik - over to you!.
 
 // *** See Public section (commented) below for the Exported Interface (that client code uses) ***
 // IMPORTANT: if client code switches on caching - **do not use in multi-threaded environments** (e.g. with nodejs threading).
@@ -16,13 +18,18 @@ import { cloneMap } from "./cloneMap";
 import { cloneRegExp } from "./cloneRegexp";
 import { cloneTypedArray } from "./cloneTypedArray";
 
-// cache - store target refs to data structure, against cloned versions - enables processing of shared data and clones.
+/**
+ * Cache object: stores target refs to data structure, against cloned versions.
+ * - Enables processing of shared data and clones.
+ * Requires that the cache is turned on via `useCache(true)`.
+ */
 const cache = new Map<unknown, unknown>();
-// default off - backwards compatible.
+/** If true (default off - backwards compatible), uses the cache */
 let usingCache = false;
+/** tracks recursion depth. deepCopy is mutually recursive with deepCopyNoCache. */
+let depth = 0;
 
-const TypedArrayMap = {         
-  // Erik: had issues with Record<string, Function> - ts moaned about Function... being too 'loose' a type.
+const TypedArrayMap = {
   "[object Date]": cloneDate,
   "[object ArrayBuffer]": cloneArrayBuffer,
   "[object DataView]": cloneDataView,
@@ -39,29 +46,17 @@ const TypedArrayMap = {
   "[object BigUint64Array]": cloneTypedArray,
   "[object RegExp]": cloneRegExp,
   "[object Map]": cloneMap,
-};
-// Erik: inferred type for object above...
+} as { [key: string]: <T>(target: T) => T };
 
-/**
- * Deep copy function for TypeScript.
- * @param T Generic type of target/copied value.
- * @param target Target value to be copied.
- * @see Original source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
- * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg ??? Erik: Update? ***
- */
-
-export function deepCopyNoCache<T>(target: T): T {
+const deepCopyNoCache = <T>(target: T): T => {
   if (!target) return target;
 
   const tag = Object.prototype.toString.call(target);
   if (TypedArrayMap[tag]) return TypedArrayMap[tag](target);
 
-  if (
-        ( typeof (target as unknown as IDeepCopy<T>).cloneSelf === 'function' )
-  )
-  {
+  if (typeof (target as unknown as IDeepCopy<T>).cloneSelf === "function") {
     const cp = (target as unknown as IDeepCopy<T>).cloneSelf() as T;
-    cache.set(target as unknown, cp);
+    usingCache && cache.set(target as unknown, cp);
     return cp;
   }
 
@@ -71,7 +66,7 @@ export function deepCopyNoCache<T>(target: T): T {
     (target as unknown[]).forEach((v, i) => {
       cp[i] = v;
     });
-    cache.set(target, cp);
+    usingCache && cache.set(target, cp);
 
     cp.forEach((v, i) => {
       cp[i] = deepCopy<unknown>(v);
@@ -81,9 +76,11 @@ export function deepCopyNoCache<T>(target: T): T {
   }
 
   if (typeof target === "object") {
-    const cp = { ...(target as unknown as { [key: string | symbol]: unknown } )};
+    const cp = {
+      ...(target as unknown as { [key: string | symbol]: unknown }),
+    };
 
-    cache.set(target, cp);
+    usingCache && cache.set(target, cp);
 
     Object.keys(cp).forEach((k) => {
       cp[k] = deepCopy<unknown>(cp[k]);
@@ -92,39 +89,43 @@ export function deepCopyNoCache<T>(target: T): T {
   }
 
   return target;
-}
+};
 
 // Public ****************
 
-// implement this interface for custom classes to enable them to be cloned.
+/** Implement this interface for custom classes to enable them to be cloned. */
 export interface IDeepCopy<T> {
   cloneSelf(): T;
 }
-// to enable use of clone-self in inline objects. See clone.test.ts for examples.
-export const CLONE_SELF = "cloneSelf";  // do not
 
-// Call this function to enable caching - default caching is off for back compatibility.
-// nb: when enables (and not unless enabled) cloning to be able to manage:
-// - cyclic data structures; 
-// - shared data within a data structure (refs to same data);
-export function useCache(b = true) {
-  usingCache = b;
-}
+/**
+ * To enable use of clone-self in inline objects.
+ * See clone.test.ts for examples.
+ */
+export const CLONE_SELF = "cloneSelf"; // do not
 
-// tracks recursion depth. deepCopy is mutually recursive with deepCopyNoCache.
-let depth = 0;
+/**
+ * Call this function to enable caching - default caching is off for back compatibility.
+ * NB: Only when enabled, cloning can manage:
+ * - cyclic data structures;
+ * - shared data within a data structure (refs to same data);
+ * @param caching
+ */
+export const useCache = (caching = true) => {
+  usingCache = caching;
+};
 
+/**
+ * Deep copy function for TypeScript.
+ * @param target Target value to be copied.
+ * @see Original source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
+ */
 export const deepCopy = <T>(target: T): T => {
-  let val: T;
-
+  // TODO: depth is never set to 0 again, so the cache is never cleared. So why do we use depth?
   if (depth === 0) cache.clear();
   depth++;
 
-  if (usingCache && cache.has(target)) {
-    val = cache.get( target ) as T;
-  } else {
-    val = deepCopyNoCache(target);
-  }
-
-  return val;
+  return usingCache && cache.has(target)
+    ? (cache.get(target) as T)
+    : deepCopyNoCache(target);
 };
