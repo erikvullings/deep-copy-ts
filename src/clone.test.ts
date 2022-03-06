@@ -112,15 +112,15 @@ const objWithArrWithObj = (shared: boolean): NestedLRTreeStruct => {
 };
 
 // Tests (part 1)
-describe(`*** testing clone function - objects/arrays and combinations\nno cycles, no 'class objects with functions/methods'`, function () {
-  it("** clone simple array - 1", function () {
+describe(`*** testing clone function - objects/arrays and combinations\nno cycles, no 'class objects with functions/methods'`, () => {
+  it("should clone simple array - 1", () => {
     const a = mkArray(100, "hello", true);
     const aclone = deepCopy(a);
 
     assJsonEq(a, aclone);
   });
 
-  it("** clone simple array - 2", function () {
+  it("should clone simple array - 2", () => {
     const a = mkArray(
       200,
       "doublespeakwise - there are no duplicates here",
@@ -130,14 +130,14 @@ describe(`*** testing clone function - objects/arrays and combinations\nno cycle
     assJsonEq(a, aclone);
   });
 
-  it("** clone obj with arrays with objects", function () {
+  it("should clone obj with arrays with objects", () => {
     const orig = objWithArrWithObj(false);
     const clone = deepCopy(orig);
 
     assJsonEq(orig, clone);
   });
 
-  it("** force clone error (comparing) - ensure recognised (sanity check)", function () {
+  it("should force clone error (comparing) - ensure recognised (sanity check)", () => {
     const orig = objWithArrWithObj(false);
     const clone = deepCopy(orig);
 
@@ -253,17 +253,17 @@ function deepClass() {
 }
 
 // Tests (part 2)
-describe(`*** testing clone function - objects with fns (methods), using variety of approaches to their creation`, function () {
+describe(`Test objects with fns (methods), using variety of approaches to their creation`, () => {
   // add 'set usingCache.'
 
-  it("** clone simple object with fn", function () {
+  it("should clone simple object with fn", () => {
     const orig = inlineObjectWithFn();
     const clone = deepCopy(orig);
 
     assJsonWithFnsEq(orig, clone, [CLONE_SELF]);
   });
 
-  it("** clone simple object with fn - force error (sanity check)", function () {
+  it("should clone simple object with fn - force error (sanity check)", () => {
     const orig = inlineObjectWithFn();
     const clone = deepCopy(orig);
 
@@ -272,7 +272,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     ass(!jsonWithFnsEq(orig, clone, [CLONE_SELF]));
   });
 
-  it("** 'new' class object with fn", function () {
+  it("should clone 'new' class object with fn", () => {
     const orig = new BasicClass(ARR_SZ);
     const clone = deepCopy(orig) as BasicClass;
 
@@ -282,7 +282,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     assJsonWithFnsEq(orig, clone, [CLONE_SELF, LEN]);
   });
 
-  it("** 'new' further derived class object with fns and other complex nested properties", function () {
+  it("should clone 'new' further derived class object with fns and other complex nested properties", () => {
     const orig = new ExtendBasicClass(
       ARR_SZ * 2,
       "goodbye cruel world",
@@ -293,7 +293,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     assJsonWithFnsEq(orig, clone, [CLONE_SELF, LEN, FN1, FN2, SET_STRING]);
   });
 
-  it("** new class embedded deeply in data structure (arrays, objects)", function () {
+  it("should clone new class embedded deeply in data structure (arrays, objects)", () => {
     const orig = deepClass();
     const clone = deepCopy(orig);
 
@@ -308,7 +308,7 @@ describe(`*** testing clone function - objects with fns (methods), using variety
     );
   });
 
-  it("** new class embedded deeply in data structure - force error (sanity check)", function () {
+  it("should clone new class embedded deeply in data structure - force error (sanity check)", () => {
     const orig = deepClass();
     const clone = deepCopy(orig);
 
@@ -357,8 +357,8 @@ type MISC_UNDEF<T> = T | undefined;
 type MISC = { a: number; b: number; self: MISC_UNDEF<MISC> };
 
 // Tests (Part 3)
-describe(`*** testing clone function - dealing with cycles in data structures, shared references, etc.`, function () {
-  it("** simple object with cycle", function () {
+describe(`Test data structures with cycles, shared references, etc.`, () => {
+  it("should clone an object with a cycle", () => {
     const orig: MISC = {
       a: VAL,
       b: 2,
@@ -380,7 +380,7 @@ describe(`*** testing clone function - dealing with cycles in data structures, s
     ass(clone.self.self.a === VAL);
   });
 
-  it("** simple object with shared refs - not cycles", function () {
+  it("should clone an object with shared refs - not cycles", () => {
     const shared = { a: VAL, b: 2 };
     const orig = { a: shared, b: shared };
 
@@ -397,7 +397,7 @@ describe(`*** testing clone function - dealing with cycles in data structures, s
     ass(clone.a.a === VAL); // unchanged.
   });
 
-  it("** self ref array (cycle)", function () {
+  it("should self ref array (cycle)", () => {
     const orig: unknown[] = [];
     orig.push(orig);
 
@@ -412,7 +412,7 @@ describe(`*** testing clone function - dealing with cycles in data structures, s
     ass(clone[0] === clone, "3");
   });
 
-  it("** array of object with shared refs and intra-array cycle", function () {
+  it("should clone an array of objects with shared refs and intra-array cycle", () => {
     const shared = { a: VAL, b: 2, c: "blah" };
     const orig: unknown[] = [shared, shared, shared];
     orig.push(orig);
@@ -430,7 +430,7 @@ describe(`*** testing clone function - dealing with cycles in data structures, s
     ass(clone[0]["a"] === VAL, "6");
   });
 
-  it("** Custom self referential class", function () {
+  it("should clone custom self referential class", () => {
     const v1 = 999;
 
     const orig = new CustomClass(v1);
