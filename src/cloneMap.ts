@@ -4,7 +4,7 @@ import { deepCopy } from "./deepCopy";
  * Creates a clone of `map`.
  *
  * @private
- * @param {Date} typedDate The map to clone.
+ * @param {Date} targetMap The map to clone.
  * @returns {Object} Returns the cloned map.
  */
 export function cloneMap<K, V>(targetMap: Map<K, V>): Map<K, V> {
