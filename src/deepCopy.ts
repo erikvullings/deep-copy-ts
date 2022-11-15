@@ -31,7 +31,7 @@ const TypedArrayMap: Record<string, Function> = {
  * @see Original source: ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
  * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg
  */
-export function deepCopy<T>(target: T): T {
+export function deepCopy<T>(target: T, hash?: WeakMap = new WeakMap()): T {
   const tag = Object.prototype.toString.call(target);
 
   if (TypedArrayMap[tag]) {
@@ -40,19 +40,26 @@ export function deepCopy<T>(target: T): T {
   if (target === null) {
     return target;
   }
+
+  if(hash.has(target)) {
+    return hash.get(target)
+  }
+
   if (target instanceof Array) {
     const cp = [] as any[];
+    hash.set(target, cp)
     (target as any[]).forEach((v) => {
       cp.push(v);
     });
-    return cp.map((n: any) => deepCopy<any>(n)) as any;
+    return cp.map((n: any) => deepCopy<any>(n), hash) as any;
   }
   if (typeof target === "object") {
     const cp = { ...(target as { [key: string]: any }) } as {
       [key: string]: any;
     };
+    hash.set(target, cp)
     Object.keys(cp).forEach((k) => {
-      cp[k] = deepCopy<any>(cp[k]);
+      cp[k] = deepCopy<any>(cp[k], hash);
     });
     return cp as T;
   }
